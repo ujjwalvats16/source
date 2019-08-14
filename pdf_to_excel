@@ -1,0 +1,28 @@
+import os
+import fitz
+import glob
+import openpyxl
+file=fitz.open("pdf.pdf")
+nop=len(file)
+
+complete_excel_file1=openpyxl.Workbook()
+for i in range(nop):
+    fp=file.loadPage(i)
+    picofp=fp.getPixmap()
+    picofp.writePNG("output"+str(i)+".png")
+    ns=complete_excel_file1.active
+    ns=complete_excel_file1.create_sheet()
+    ns.title="page"+str(i)
+    page_image=openpyxl.drawing.image.Image("output"+str(i)+".png")
+    page_image.anchor="A1"
+    ns.add_image(page_image)
+    #os.remove("output"+str(i)+".png")
+    
+    
+x=complete_excel_file1.sheetnames    
+del complete_excel_file1[x[0]]
+complete_excel_file1.save("final_output.xlsx")    
+cwd=os.getcwd() 
+files=glob.glob(cwd+"/*.png")
+for file in files:
+    os.remove(file)
