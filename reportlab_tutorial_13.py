@@ -22,10 +22,3 @@ for i in range(20):
     
 pdf.drawText(content)
 pdf.save()
-
-    
-    
-    
-    
-    
-  
