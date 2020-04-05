@@ -1,0 +1,41 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE Bundle PUBLIC "sailpoint.dtd" "sailpoint.dtd">
+<Bundle name="AD_Create_Business_Role" type="business">
+  <Attributes>
+    <Map>
+      <entry key="accountSelectorRules"/>
+      <entry key="allowDuplicateAccounts" value="false"/>
+      <entry key="allowMultipleAssignments" value="false"/>
+      <entry key="mergeTemplates" value="false"/>
+      <entry key="sysDescriptions">
+        <value>
+          <Map>
+            <entry key="en_US"/>
+          </Map>
+        </value>
+      </entry>
+    </Map>
+  </Attributes>
+  <Owner>
+    <Reference class="sailpoint.object.Identity" name="spadmin"/>
+  </Owner>
+  <ProvisioningForms>
+    <Form name="Create_AD">
+      <ApplicationRef>
+        <Reference class="sailpoint.object.Application" name="AD"/>
+      </ApplicationRef>
+      <Attributes>
+        <Map>
+          <entry key="pageTitle" value="Create_AD"/>
+        </Map>
+      </Attributes>
+      <Section label="General" name="General">
+        <Field displayName="Last Name" name="sn" type="string">
+          <Script>
+            <Source>return identity.getAttribute("lastname");</Source>
+          </Script>
+        </Field>
+      </Section>
+    </Form>
+  </ProvisioningForms>
+</Bundle>
