@@ -1,0 +1,161 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE Workflow PUBLIC "sailpoint.dtd" "sailpoint.dtd">
+<Workflow explicitTransitions="true" libraries="Identity" name="LifecycleEventJoinerDigital365" type="IdentityLifecycle">
+  <Variable input="true" name="trigger">
+    <Description>The IdentityTrigger</Description>
+  </Variable>
+  <Variable input="true" name="event" transient="true">
+    <Description>
+      The IdentityChangeEvent.  It can be used to build
+      the provisioning plan, but does not need to be
+      persisted with the case, so marked as transient.
+    </Description>
+  </Variable>
+  <Variable input="true" name="flow">
+    <Description>
+      The name of the LCM flow that launched this workflow.
+
+      This is one of these three values:
+
+      AccountsRequest
+      EntitlementsRequest
+      RolesRequest
+    </Description>
+  </Variable>
+  <Variable input="true" name="identityName">
+    <Description>The name of the identity.</Description>
+  </Variable>
+  <Variable input="true" name="plan">
+    <Description>The provisioning plan ready to execute.</Description>
+  </Variable>
+  <Variable initializer="string:LCM" input="true" name="source">
+    <Description>
+      String version of sailpoint.object.Source to indicate
+      where the request originated.  Defaults to LCM.
+    </Description>
+  </Variable>
+  <Variable initializer="true" name="trace">
+    <Description>
+      Used for debugging this workflow and when set to true trace
+      will be sent to stdout.
+    </Description>
+  </Variable>
+  <Description>Process a new employee.</Description>
+  <Step icon="Start" name="Start" posX="28" posY="10">
+    <Transition to="Process user"/>
+  </Step>
+  <Step icon="Message" name="Process user" posX="148" posY="10">
+    <Description>Process the user that joined.</Description>
+    <Script>
+      <Source>
+        System.out.println("New user was entered the system: " + event.getObject().getDisplayableName());
+      </Source>
+    </Script>
+    <Transition to="Create Plan"/>
+  </Step>
+  <Step name="Create Plan" posX="40" posY="10" resultVariable="plan">
+    <Script>
+      <Source>
+        import sailpoint.object.ProvisioningPlan;
+        import sailpoint.object.ProvisioningPlan.AccountRequest;
+        import sailpoint.object.ProvisioningPlan.AttributeRequest;
+        import sailpoint.object.ProvisioningProject;
+        import sailpoint.api.Provisioner;
+        import sailpoint.object.Identity;
+        import sailpoint.object.Identity;
+        import sailpoint.api.SailPointContext;
+        import java.util.ArrayList;
+        import java.util.List;
+
+        Identity identity=context.getObjectByName(Identity.class,identityName);
+        String company=identity.getAttribute("company");
+        String container="";
+        if(company.equals("Digital365")) { container="OU=Employees,OU=AllUsers,DC=totaltechnology,DC=in"; } else { container="OU=Contractors,OU=AllUsers,DC=totaltechnology,DC=in";
+        }
+
+        String samaccountname=identity.getName();
+        String dn="CN="+identityName+","+container;
+        ProvisioningPlan plan=new ProvisioningPlan();
+
+        AccountRequest accountReq=new AccountRequest();
+        accountReq.setApplication("AD");
+        accountReq.setOperation(ProvisioningPlan.AccountRequest.Operation.Create);
+        accountReq.setNativeIdentity(dn);
+
+        accountReq.add(new AttributeRequest("objectType", ProvisioningPlan.Operation.Add, "User"));
+        accountReq.add(new AttributeRequest("sAMAccountName", ProvisioningPlan.Operation.Add, identityName));
+        accountReq.add(new AttributeRequest("password", ProvisioningPlan.Operation.Add, "Total@1234567"));
+        accountReq.add(new AttributeRequest("IIQDisabled", ProvisioningPlan.Operation.Add, false));
+        accountReq.add(new AttributeRequest("givenName", ProvisioningPlan.Operation.Add, identity.getAttribute("firstname")));
+
+        accountReq.add(new AttributeRequest("sn", ProvisioningPlan.Operation.Add, identity.getAttribute("lastname")));
+        accountReq.add(new AttributeRequest("memberOf", ProvisioningPlan.Operation.Set,"CN=Accounting_ADMIN,OU=AllGroups,DC=totaltechnology,DC=in"));
+
+        plan.add(accountReq);
+        plan.setIdentity(identity);
+        plan.setTargetIntegration("AD");
+        return plan;
+      </Source>
+    </Script>
+    <Transition to="Compile Project"/>
+  </Step>
+  <Step action="call:compileProvisioningProject" icon="Task" name="Compile Project" posX="121" posY="15" resultVariable="project">
+    <Arg name="identityName" value="ref:identityName"/>
+    <Arg name="plan" value="ref:plan"/>
+    <Arg name="requester" value="ref:launcher"/>
+    <Arg name="source" value="ref:source"/>
+    <Arg name="optimisticProvisioning" value="ref:optimisticProvisioning"/>
+    <Arg name="disableRetryRequest" value="!ref:enableRetryRequest"/>
+    <Arg name="noApplicationTemplates">
+      <Script>
+        <Source>
+          boolean ignoreForms = false;
+          if ("ForgotPassword".equals(flow) || "ExpirePassword".equals(flow)) {
+          ignoreForms = true;
+          }
+          return ignoreForms;
+        </Source>
+      </Script>
+    </Arg>
+    <Arg name="noLocking">
+      <Script>
+        <Source>
+          boolean noLocking = false;
+          if ("Lifecycle".equals(flow)) {
+          noLocking = true;
+          }
+          return noLocking;
+        </Source>
+      </Script>
+    </Arg>
+    <Description>Compile the provisioning plan into a provisioning project.
+      If you need to pass in provisioner options like "noFiltering"
+      or "noRoleDeprovisioning" you must pass them as explicit
+      arguments to the call.
+
+      The evaluation options "requester" and "source" are commonly
+      set here.
+
+      You can also pass things into the Template and Field scripts by
+      defining Args in this step.</Description>
+    <Transition to="Provision"/>
+  </Step>
+  <Step action="call:provisionProject" icon="Provision" name="Provision" posX="258" posY="100">
+    <Arg name="project" value="ref:project"/>
+    <Arg name="background" value="!ref:foregroundProvisioning"/>
+    <Description> 
+      Call the typical provisionProject method during our first time
+      through the workflow.  If there are retries this step
+      will be skipped and should fall into the "Retry Provision"
+      step.
+
+      The only thing special here is the flag we specify to
+      the PlanEvaluator to prevent the Request object from
+      from being created if there are retries in the project.
+      Then we can handle them directly in the workflow looping 
+      until we are complete.
+    </Description>
+    <Transition to="Stop"/>
+  </Step>
+  <Step icon="Stop" name="Stop" posX="268" posY="10"/>
+</Workflow>
