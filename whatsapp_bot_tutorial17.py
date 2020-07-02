@@ -72,7 +72,7 @@ def reply():
              otp=random.randint(1000,9999)
              mail=user_input[1]
              send_mail(mail, otp)
-             resp=msg.message(f"we have sent otp to your registered email id {mail}")
+             resp=msg.message(f"we have sent otp to your registered email id {mail},please enter the otp for completing the registration")
              collection.update_one({"NUMBER":num},{"$set":{"NAME":user_input[0],"otp":otp,"EMAIL":user_input[1],"status":"added","last":datetime.now().timestamp()}})
              
             except Exception as e:
