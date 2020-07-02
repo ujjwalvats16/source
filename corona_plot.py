@@ -18,9 +18,10 @@ with open("cred.txt")as f1:
 #endregion
 #database connectivity
 #region
-client=MongoClient("mongodb+srv://"+id+":"+urllib.parse.quote(pwd)+"@cluster0-lymvb.mongodb.net/test?retryWrites=true&w=majority")
+client=MongoClient("mongodb+srv://"+id+":"+urllib.parse.quote(pwd)+"@cluster0-lymvb.mongodb.net/test?retryWrites=true&w=majority?authSource=admin")
 db=client["whatsapp_db"]
 collection=db["whatsapp_db"]
+x=collection.find_one({"NUMBER":num})
 #endregion#flask part
 #region
 apbot=Flask(__name__)
