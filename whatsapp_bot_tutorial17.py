@@ -75,7 +75,7 @@ def reply():
                 collection.update_one({"NUMBER":num},{"$set":{"NAME":name,"EMAIL":mail,"OTP":otp,"status":"added","last":datetime.now().timestamp()}}) 
             except Exception as e:
                 if (str(e)=="list index out of range"):
-                 resp=msg.message("*You have not entered youe name and mail address properly , please use comma to separte the name and email address*") 
+                 resp=msg.message("*You have not entered your name and mail address properly , please use comma to separate the name and email address*") 
                 else:
                     resp=msg.message(str(e))
                 
