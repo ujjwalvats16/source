@@ -23,6 +23,7 @@ app=Flask(__name__)
 def reply():
     num=request.form.get("From")
     num=num.replace("whatsapp:","")
+    print(num)
     msg_text=request.form.get("Body")
     if "," in msg_text:
         pin=msg_text.split(",")[0]

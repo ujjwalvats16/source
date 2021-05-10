@@ -31,16 +31,16 @@ def gen_pdf(num,data_row):
     frame1.addFromList(flow_obj, pdf)
     pdf.showPage()
     for j in range(len(count_new)):
-        frame=Frame(10,40,560,780,showBoundary=1)
+        frame=Frame(10,40,600,780,showBoundary=1)
         data1=[["centre_name","centre_address","availability","date"]]
         if(j==len(count_new)-1):
             for row in data_row[count_new[j]:]:
                 data1.append([row["centre_name"],row["centre_address"],row["availability"],row["date"]])
-            table=Table(data1,colWidths=[100,250,80,50],rowHeights=[25 for i in range(len(data1))])
+            table=Table(data1,colWidths=[120,300,80,60],rowHeights=[25 for i in range(len(data1))])
             ts=TableStyle([("GRID",(0,0),(-1,-1),2,colors.red),
                            ("BACKGROUND",(0,0),(-1,0),colors.yellow),
                            ("BACKGROUND",(0,1),(-1,-1),colors.lightblue),
-                           ("SIZE",(0,0),(-1,-1),10,colors.yellow),
+                           ("SIZE",(0,0),(-1,-1),6,colors.yellow),
                            ("ALIGN",(0,1),(-1,-1),"LEFT")])
             table.setStyle(ts)
             flow_obj.append(Spacer(8,8))
@@ -50,7 +50,7 @@ def gen_pdf(num,data_row):
         else:
             for row in data_row[count_new[j]:count_new[j+1]]:
                 data1.append([row["centre_name"],row["centre_address"],row["availability"],row["date"]])
-            table=Table(data1,colWidths=[100,250,80,50],rowHeights=[25 for i in range(len(data1))])
+            table=Table(data1,colWidths=[120,300,80,60],rowHeights=[25 for i in range(len(data1))])
             ts=TableStyle([("GRID",(0,0),(-1,-1),2,colors.red),
                            ("BACKGROUND",(0,0),(-1,0),colors.yellow),
                            ("BACKGROUND",(0,1),(-1,-1),colors.lightblue),
